@@ -7,17 +7,7 @@ import { S3BucketParams } from '../../types/S3BucketParams';
 export module S3Service {
 
     export function configureBucket(bucketName: string, region: string): AWS.S3 {
-        // AWS.config.update({
-        //     accessKeyId: 'AKIA3ES4EFWBDOCTWSTA',
-        //     secretAccessKey: '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',
-        //     region: 'us-east-1'
-        // }
-        // );
 
-        // return new AWS.S3({
-        //     params: { Bucket: bucketName },
-        //     region: region,
-        // });
         AWS.config.region = 'us-east-1'; // Region
         var poolId: string = process.env.REACT_APP_IDENTITY_POOL_ID ?? 'error';
         AWS.config.credentials = new AWS.CognitoIdentityCredentials({
@@ -49,8 +39,8 @@ export module S3Service {
         AWS.config.credentials = new AWS.CognitoIdentityCredentials({
             IdentityPoolId: poolId,
         });
-
-        var params = { Bucket: 'robpetersphoto-uploads' };
+        var bucket = process.env.REACT_APP_S3_BUCKET ?? '';
+        var params = { Bucket: bucket };
 
         // Create a new service object
         var s3 = new AWS.S3({
@@ -60,7 +50,7 @@ export module S3Service {
 
         var albumPhotosKey = encodeURIComponent(galleryName) + '/';
         var results: Array<string> = new Array<string>();
-        s3.listObjects({ Bucket: 'robpetersphoto-uploads', Prefix: albumPhotosKey }, function (this: any, err, data) {
+        s3.listObjects({ Bucket: bucket, Prefix: albumPhotosKey }, function (this: any, err, data) {
             if (err) {
                 return results;
             }
@@ -71,7 +61,7 @@ export module S3Service {
 
             if (data.Contents !== undefined) {
                 data.Contents.map((photo, index) => {
-                    var url = s3.getSignedUrl('getObject', { Bucket: 'robpetersphoto-uploads', Key: photo.Key });
+                    var url = s3.getSignedUrl('getObject', { Bucket: bucket, Key: photo.Key });
                     results.push(url);
                 });
             }
@@ -87,11 +77,12 @@ export module S3Service {
         AWS.config.credentials = new AWS.CognitoIdentityCredentials({
             IdentityPoolId: poolId,
         });
+        var bucket = process.env.REACT_APP_S3_BUCKET ?? '';
 
-        var s3 = S3Service.configureBucket('robpetersphoto-uploads', 'us-east-1');
+        var s3 = S3Service.configureBucket(bucket, 'us-east-1');
 
         var params = {
-            Bucket: 'robpetersphoto-uploads',
+            Bucket: bucket,
             Key: photo,
         };
 
